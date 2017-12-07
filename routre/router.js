@@ -2,50 +2,57 @@
 const express = require('express');
 
 function preDecorate(target, key) {
-  if (!target.router) {
-    target.router = express.Router()
+  const prototype = target.constructor.prototype;
+  Object.defineProperty(target, 'router0', {value: '0++'});
+  console.log('456456', target.router0)
+  if (!prototype.router) {
+    prototype.router = express.Router()
   }
-  if (!target.scheme) {
-    target.scheme = {};
+  if (!prototype.scheme) {
+    prototype.scheme = {};
   }
-  if (!target.scheme[key]) {
-    target.scheme[key] = {};
+  if (!prototype.scheme[key]) {
+    prototype.scheme[key] = {};
   }
-
 }
 
 function isClass(Class) {
    return typeof Class === 'function' && Class.prototype.constructor === Class;
 }
 
+/**
+  * In class decoretor Target.prototype === target in method decoretor
+  * Target = target.constructor
+  * Target.prototype = target = target.constructor.prototype = Instance
+  * Target is function
+  * Target.prototype is Object
+  * target is object
+  */
 function Router(prefix = '/') {
   return function(Target){
     if (!isClass(Target)) {
       throw new Error('`@Router` may be used with class only');
     }
-    class Class extends Target {
-      use(app) {
-        app.use(prefix, Target.prototype.router);
-      }
-      constructor(prefix) {
-        super();
-      }
+    Target.prototype.use = function(app) {
+      app.use(prefix, this.router);
     }
-    return Class;
+    console.log('-----------', Target.prototype);
+    return Target;
   }
 }
 
 function Route(httpMetod, path, ...args) {
   return function(target, key, descriptor) {
+    const prototype = target.constructor.prototype;
     preDecorate(target, key);
-    const router = target.router;
+    const router = prototype.router;
     const route = target[key]
-    target.scheme[key].path = path;
-    target.scheme[key].httpMetod = httpMetod;
+    prototype.scheme[key].path = path;
+    prototype.scheme[key].httpMetod = httpMetod;
     router[httpMetod](path, ...args, async function(req, res, next) {
       try {
         const response = await route(req, res, next);
-        res.status(target.scheme[key].status || 200).send(response);
+        res.status(prototype.scheme[key].status || 200).send(response);
       } catch (ex) {
         next(ex);
       }
@@ -56,8 +63,9 @@ function Route(httpMetod, path, ...args) {
 
 function Status(status) {
   return function(target, key, descriptor) {
+    const prototype = target.constructor.prototype;
     preDecorate(target, key);
-    target.scheme[key].status = status;
+    prototype.scheme[key].status = status;
     return descriptor;
   }
 }
