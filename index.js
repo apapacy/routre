@@ -14,8 +14,8 @@ require('babel-polyfill');
 
 const express = require('express')
 const app = express()
-const routes = require('./app/routes').default;
+const Routes = require('./app/routes');
 app.get('/', (req, res) => res.send('Hello World!'))
-app.use('/test', routes);
+new Routes().use(app);
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))
