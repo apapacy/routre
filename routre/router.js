@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 
-function onMount(target, key) {
+function preDecorate(target, key) {
   if (!target.router) {
     target.router = express.Router()
   }
@@ -14,8 +14,15 @@ function onMount(target, key) {
 
 }
 
+function isClass(Class) {
+   return typeof Class === 'function' && Class.prototype.constructor === Class;
+}
+
 function Router(prefix = '/') {
   return function(Target){
+    if (!isClass(Target)) {
+      throw new Error('`@Router` may be used with class only');
+    }
     class Class extends Target {
       use(app) {
         app.use(prefix, Target.prototype.router);
@@ -30,7 +37,7 @@ function Router(prefix = '/') {
 
 function Route(httpMetod, path, ...args) {
   return function(target, key, descriptor) {
-    onMount(target, key);
+    preDecorate(target, key);
     const router = target.router;
     const route = target[key]
     target.scheme[key].path = path;
@@ -49,7 +56,7 @@ function Route(httpMetod, path, ...args) {
 
 function Status(status) {
   return function(target, key, descriptor) {
-    onMount(target, key);
+    preDecorate(target, key);
     target.scheme[key].status = status;
     return descriptor;
   }
