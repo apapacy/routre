@@ -29,6 +29,7 @@ function isClass(Class) {
   * target is object
   */
 function Router(prefix = '/') {
+  // Target это класс-конструктор инстанса
   return function(Target){
     if (!isClass(Target)) {
       throw new Error('`@Router` may be used with class only');
@@ -42,6 +43,7 @@ function Router(prefix = '/') {
 }
 
 function Route(httpMetod, path, ...args) {
+  // target это прототип инстнаса класса
   return function(target, key, descriptor) {
     const prototype = target.constructor.prototype;
     preDecorate(target, key);
