@@ -4,17 +4,9 @@ const express = require('express');
 function onMount(target, key) {
   if (!target.router) {
     target.router = express.Router()
-    Object.defineProperty(target, 'router', {
-      value: target.router,
-      writable: false,
-    })
   }
   if (!target.scheme) {
     target.scheme = {};
-    Object.defineProperty(target, 'scheme', {
-      value: target.scheme,
-      writable: false
-    })
   }
   if (!target.scheme[key]) {
     target.scheme[key] = {};
@@ -26,7 +18,10 @@ function Router(prefix = '/') {
   return function(Target){
     class Class extends Target {
       use(app) {
-        app.use(prefix, this.router);
+        app.use(prefix, Target.prototype.router);
+      }
+      constructor(prefix) {
+        super();
       }
     }
     return Class;
@@ -55,8 +50,6 @@ function Route(httpMetod, path, ...args) {
 function Status(status) {
   return function(target, key, descriptor) {
     onMount(target, key);
-    const router = target.router;
-    const route = target[key]
     target.scheme[key].status = status;
     return descriptor;
   }
